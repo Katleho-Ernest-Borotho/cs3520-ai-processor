@@ -99,4 +99,4 @@ Input: The list of extracted minutiae points (x, y, angle).
 
 Core Operations: Compare the input list with a stored template. This involves calculating the Sum of Absolute Differences (SAD) between feature descriptors or point locations. This workload consists of loops performing subtraction, absolute value, and accumulation.
 
-Conclusion: The critical feature extraction stage of fingerprint analysis shares the same MAC-intensive convolution workload as the agricultural module. The final matching stage introduces a similar but distinct "accumulate-after-operation" pattern
+Conclusion: The critical feature extraction stage of fingerprint analysis shares the same MAC-intensive convolution workload as the agricultural module. The final matching stage introduces a similar but distinct "accumulate-after-operation" pattern.   

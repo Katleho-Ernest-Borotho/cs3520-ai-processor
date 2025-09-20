@@ -1,97 +1,102 @@
 # cs3520-ai-processor
-Of course. This is a crucial first step. Let's craft a structured approach to your **Domain Analysis Report** for Week 5.
+ Domain & Workload Analysis Report
+1. Module: Voice-to-Text for Sesotho
+Domain Analysis (The "Why")
+In Lesotho, the primary language is Sesotho. While many are bilingual, digital literacy and text-based interfaces can still be a barrier, especially for older populations or those with limited formal education. A reliable voice-to-text module operating in Sesotho would be a game-changer. It enables:
 
-This report isn't about technical processor details yet. It's about proving you understand the *problem space*: the user, their needs, the applications that serve those needs, and the computational demands of those applications.
+Financial Inclusion: Users could interact with mobile money services like M-Pesa by voice, checking balances or making transactions without navigating complex menus.
 
-Here is a step-by-step guide and a template you can use.
+Access to Information: Requesting government service information, local weather forecasts for farming, or bus schedules becomes accessible to everyone.
 
-### **Step-by-Step Guide to Completing Week 5's Deliverable**
+Communication: Sending SMS or WhatsApp messages by dictating them in Sesotho removes the barrier of typing on a small keyboard.
 
-**Objective:** To produce a short report (3-5 pages) that defines the context and justifies your choice of representative applications based on the needs of rural Lesotho.
+This module directly addresses the challenge of digital inclusion by making technology conform to the user's natural language and mode of communication.
 
-**Step 1: Define the User and Their Context**
-*   **Who is the user?** A smallholder farmer in a rural area of Lesotho.
-*   **What are their constraints?**
-    *   **Cost:** The device must be ultra-low-cost.
-    *   **Connectivity:** Internet access is limited, expensive, and unreliable. Apps must work **offline**.
-    *   **Power:** Access to electricity for charging may be limited. The device and its processor must be **extremely power-efficient**.
-    *   **Literacy/Language:** Interfaces must be voice-driven and in local languages (e.g., Sesotho).
+Workload Requirements (The "How")
+The process of converting speech to text can be broken down into two main computational stages:
 
-**Step 2: Identify Core Problem Areas**
-Based on the constraints above, what are the biggest problems technology can solve?
-1.  **Access to Agricultural Knowledge:** When to plant, what to plant, how to treat diseases.
-2.  **Language Barriers:** Accessing digital services that are often in English.
-3.  **Financial Inclusion:** Secure, low-bandwidth mobile money and identity verification.
+Feature Extraction: This stage transforms raw audio waves into a compact, useful representation. The most common method is calculating Mel-Frequency Cepstral Coefficients (MFCCs).
 
-**Step 3: Select Representative Applications**
-Choose 2-3 applications that address the problems above and are feasible on a low-cost device. These will be the focus of your entire project.
-*   **Your Choice:** **1. Vernacular Speech Interface** and **2. On-Device Crop Disease Detection** are perfect choices.
-*   **Justification:** They directly address problems 1 and 2, are highly dependent on efficient local computation (AI inference), and have clearly defined workloads.
+Input: A stream of 16-bit audio samples.
 
-**Step 4: Analyze the Workload Requirements**
-For each application, break down what it requires from the processor. This is the most important part.
+Core Operations:
 
----
+Fast Fourier Transform (FFT): This algorithm analyzes small windows of audio to see which frequencies are present. Computationally, it's a sequence of "butterfly" operations, each of which is essentially a complex multiply-accumulate. This is MAC-intensive.
 
-### **Domain Analysis Report Template**
+Mel Filterbank: This involves a matrix-vector multiplication to group the FFT results into bands that mimic human hearing. This is another purely MAC-intensive task.
 
-You can structure your report using the following template.
+Logarithm & DCT: Further mathematical transforms that are less intensive but still involve vector arithmetic.
 
-# **Domain Analysis Report: AI for Rural Mobile Telephony in Lesotho**
+Acoustic Model (Pattern Matching): This stage compares the extracted features (the MFCC vectors) to a pre-trained dictionary of Sesotho sounds (phonemes).
 
-**Group Name:** [Your Group Name]
-**Date:** [Date of Submission]
+Input: A sequence of MFCC vectors.
 
-### **1. Introduction**
+Core Operations: For a simple, on-device model, this involves calculating the "distance" between the input vector and the dictionary vectors. This is a dot product or Euclidean distance calculation, which boils down to a sequence of subtractions, multiplications, and additions. Again, a MAC-heavy workload.
 
-This report outlines the analysis of the mobile AI telephony context for low-cost devices in rural Lesotho. The primary goal is to identify representative applications and their associated computational workloads to inform the design of a customized, efficient RISC-V processor. The core design constraints are ultra-low cost, minimal power consumption, and offline functionality.
+Conclusion: The workload is dominated by vector arithmetic, specifically multiply-accumulate operations on streams of 16-bit data.
 
-### **2. Target User and Context**
+2. Module: Agricultural Image Analysis (Maize Disease)
+Domain Analysis (The "Why")
+Maize (poone in Sesotho) is a staple food and a primary source of income for a vast majority of rural households in Lesotho. Crop yields are threatened by diseases like Maize Streak Virus and Grey Leaf Spot. For a small-scale farmer, identifying these diseases early is the difference between a successful harvest and financial ruin. This module acts as a "pocket agronomist," using the phone's camera to provide an initial diagnosis.
 
-The primary user is a smallholder farmer in rural Lesotho. Their key characteristics relevant to this project are:
-*   **Economic Reality:** Requires technology that is affordable to acquire and operate.
-*   **Connectivity:** Lives in an area with limited or no reliable internet access, necessitating fully offline application functionality.
-*   **Infrastructure:** Has limited access to a stable electrical grid, making device power efficiency a critical factor.
-*   **Usability:** May have low literacy levels and is primarily Sesotho-speaking, requiring voice-based and vernacular language interfaces.
+Workload Requirements (The "How")
+The process involves analyzing a photo of a maize leaf to find tell-tale signs of disease.
 
-These constraints directly dictate the technical requirements for both the applications and the underlying processor.
+Image Preprocessing:
 
-### **3. Representative Applications & Workload Requirements**
+Input: A color image (e.g., 24-bit RGB).
 
-Based on the user context, two representative applications have been selected for analysis.
+Core Operations:
 
-#### **3.1. Application 1: Vernacular Speech Command & Translation**
+Resizing: Downscaling the image to a manageable size (e.g., 96x96 pixels) to reduce computation.
 
-*   **Description:** An offline application that allows users to interact with their phone and access agricultural information databases using spoken Sesotho commands. It may also provide simple translation services for key agricultural terms.
-*   **Local Problem Solved:** Breaks down language and literacy barriers, providing access to digital services through the most natural interface: speech.
-*   **Workload Requirements:**
-    *   **Computation:** Dominated by the inference of a small, specialized Recurrent Neural Network (RNN) or a similar lightweight model for speech recognition and translation.
-    *   **Key Operation:** Dense **Matrix Multiplications** (Millions of Multiply-Accumulate - MAC - operations). This is the fundamental workload for neural networks.
-    *   **Memory:** Requires frequent access to a pre-loaded model (weights and biases). Memory bandwidth and efficient caching are important to keep the processor fed with data.
-    *   **Precision:** To save cost and power, **fixed-point arithmetic** (16-bit or 8-bit) is preferred over more expensive floating-point (32-bit).
+Color Space Conversion: Converting the image from RGB to Grayscale. This simplifies the math and is often sufficient for texture-based analysis. The formula Gray = 0.299*R + 0.587*G + 0.114*B involves multiplications and additions for every pixel.
 
-#### **3.2. Application 2: On-Device Crop Disease Detection**
+Feature Extraction (Convolution): This is the computational core. We use small filters (kernels) to detect features like edges, spots, and textures.
 
-*   **Description:** An offline application that uses the phone's camera to capture an image of a plant leaf and uses a lightweight Convolutional Neural Network (CNN) to identify signs of common diseases specific to crops in Lesotho (e.g., maize, sorghum).
-*   **Local Problem Solved:** Provides immediate, actionable agricultural advice without the need for an internet connection or a visit from an extension officer, potentially saving harvests.
-*   **Workload Requirements:**
-    *   **Computation:** Dominated by the **Convolutional layers** of a CNN. Convolution involves sliding a small filter across an image, which is mathematically equivalent to a vast number of MAC operations.
-    *   **Key Operation:** Massively parallel **Multiply-Accumulate (MAC)** operations. The same operation is applied independently across the entire image, indicating high potential for data parallelism.
-    *   **Memory:** Has high memory bandwidth demands due to the need to access image pixel data and filter weights simultaneously. A focus on efficient data movement is critical.
-    *   **Precision:** **Fixed-point arithmetic** (16-bit or 8-bit) is again sufficient for image classification, keeping hardware costs low.
+Input: A 2D array of 8-bit grayscale pixel values.
 
-### **4. Summary of Common Workload Characteristics**
+Core Operation: A 2D Convolution. A 3x3 or 5x5 kernel matrix slides over the image. At each position, the corresponding pixel and kernel values are multiplied, and the results are summed up. This produces a single value for the output feature map. This process is repeated across the entire image. This is a massively parallel and intensely MAC-dominated workload.
 
-The analysis of the two representative applications reveals a common set of processor workload requirements:
+Classification:
 
-1.  **Compute-Centric:** Both workloads are dominated by **Multiply-Accumulate (MAC)** operations.
-2.  **Memory-Intensive:** Both require efficient handling of model weights and input data (audio features, images).
-3.  **Suitable for Parallelism:** The image processing workload, in particular, is highly data-parallel.
-4.  **Precision:** **Fixed-point arithmetic** is a viable and cost-effective solution for both applications.
+Input: The feature maps generated by the convolution step.
 
-These shared characteristics will directly guide the customization of the RISC-V ISA and the design of the microarchitecture in the subsequent phases of this project, ensuring the final processor is tailored for efficiency and low cost.
+Core Operation: A simple classifier (like a decision tree) makes a final judgment. This involves a series of if-then-else comparisons on the feature values. This is heavy on branching and comparison instructions.
 
----
-This report provides the "why" behind your technical decisions. Once you have this document drafted, you are perfectly set up to start writing the C++ prototype programs that embody these workloads.
+Conclusion: The workload is overwhelmingly dominated by 2D convolutions, which are pure MAC operations on 8-bit pixel data.
 
-**Shall we now look at how to write those C++ prototype programs for the Vernacular Speech and Crop Disease applications?**
+3. Module: Simplified Biometric Identification (Fingerprint)
+Domain Analysis (The "Why")
+Secure identity is the bedrock of a modern digital economy. In Lesotho, where formal identification can be a hurdle, biometrics provide a powerful solution for services like:
+
+Mobile Money: Securely authorizing an M-Pesa transaction with a fingerprint instead of a vulnerable PIN.
+
+Social Grants: Ensuring government pension or aid payments go to the correct person.
+
+Healthcare: Accessing personal health records at a local clinic.
+
+This module provides a secure, offline method to verify a user's identity.
+
+Workload Requirements (The "How")
+The core task is to extract unique features from a fingerprint image and match them against a stored template.
+
+Image Enhancement:
+
+Input: A grayscale fingerprint image.
+
+Core Operations: Use filters to remove noise and enhance the contrast between ridges and valleys. This uses the exact same 2D Convolution (MAC) workload as the agricultural module.
+
+Feature Extraction (Minutiae Detection):
+
+Input: The enhanced image.
+
+Core Operations: The goal is to find "minutiae" (ridge endings and splits). This is achieved by analyzing the 3x3 neighborhood of each pixel. This analysis often uses convolutional kernels designed to spot these specific patterns. The workload is, once again, dominated by MAC operations.
+
+Template Matching:
+
+Input: The list of extracted minutiae points (x, y, angle).
+
+Core Operations: Compare the input list with a stored template. This involves calculating the Sum of Absolute Differences (SAD) between feature descriptors or point locations. This workload consists of loops performing subtraction, absolute value, and accumulation.
+
+Conclusion: The critical feature extraction stage of fingerprint analysis shares the same MAC-intensive convolution workload as the agricultural module. The final matching stage introduces a similar but distinct "accumulate-after-operation" pattern

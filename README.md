@@ -6,13 +6,13 @@ In Lesotho, the primary language is Sesotho. While many are bilingual, digital l
 
 Financial Inclusion: Users could interact with mobile money services like M-Pesa by voice, checking balances or making transactions without navigating complex menus.
 
-Access to Information: Requesting government service information, local weather forecasts for farming, or bus schedules becomes accessible to everyone.
+Access to Information: Requesting government service information, local weather forecasts for farming.
 
 Communication: Sending SMS or WhatsApp messages by dictating them in Sesotho removes the barrier of typing on a small keyboard.
 
 This module directly addresses the challenge of digital inclusion by making technology conform to the user's natural language and mode of communication.
 
-Workload Requirements (The "How")
+Workload Requirements
 The process of converting speech to text can be broken down into two main computational stages:
 
 Feature Extraction: This stage transforms raw audio waves into a compact, useful representation. The most common method is calculating Mel-Frequency Cepstral Coefficients (MFCCs).

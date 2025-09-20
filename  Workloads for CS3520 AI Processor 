@@ -1,0 +1,206 @@
+//1. Voice-to-Text for Sesotho: Core Workloads
+
+
+#include <vector>
+#include <cmath> // For sin, cos
+
+// A very simplified FFT function to demonstrate the core workload.
+// This is not an efficient implementation, just a clear one.
+void simpleFFT(std::vector<float>& real, std::vector<float>& imag) {
+    int n = real.size();
+    // The FFT works by recursively breaking down the signal. This is the iterative version.
+    for (int segmentSize = 2; segmentSize <= n; segmentSize *= 2) {
+        float angle = -2 * M_PI / segmentSize;
+        // Pre-calculate rotation factors (Twiddle factors)
+        float w_real = cos(angle);
+        float w_imag = sin(angle);
+
+        for (int segmentStart = 0; segmentStart < n; segmentStart += segmentSize) {
+            // Initialize a complex number representing the current rotation factor
+            float factor_real = 1.0f;
+            float factor_imag = 0.0f;
+
+            for (int j = 0; j < segmentSize / 2; j++) {
+                // --- THE "BUTTERFLY" OPERATION - THE CORE OF FFT ---
+                // 1. Calculate the offset of the two points to combine
+                int index1 = segmentStart + j;
+                int index2 = segmentStart + j + segmentSize / 2;
+
+                // 2. Load the two complex values (a + bi) and (c + di)
+                float a = real[index1], b = imag[index1];
+                float c = real[index2], d = imag[index2];
+
+                // 3. Multiply the second point by the complex rotation factor: factor * (c + di)
+                // This is a complex multiplication: (factor_real * c - factor_imag * d) + (factor_real * d + factor_imag * c)i
+                float t_real = factor_real * c - factor_imag * d;
+                float t_imag = factor_real * d + factor_imag * c;
+
+                // 4. Perform the butterfly: combine the points
+                // New value for point 1: (a + t_real) + (b + t_imag)i
+                real[index1] = a + t_real;
+                imag[index1] = b + t_imag;
+                // New value for point 2: (a - t_real) + (b - t_imag)i
+                real[index2] = a - t_real;
+                imag[index2] = b - t_imag;
+                // --- END OF BUTTERFLY OPERATION ---
+
+                // 5. Update the rotation factor for the next point in this segment
+                // Another complex multiply: factor = factor * w
+                float next_factor_real = factor_real * w_real - factor_imag * w_imag;
+                float next_factor_imag = factor_real * w_imag + factor_imag * w_real;
+                factor_real = next_factor_real;
+                factor_imag = next_factor_imag;
+            }
+        }
+    }
+    // Note: This code ignores bit-reversal permutation for simplicity.
+}
+
+int main() {
+    // Simulate a tiny audio snippet (8 samples)
+    std::vector<float> audioReal = {1.0f, 0.5f, -0.2f, 0.8f, -1.0f, -0.5f, 0.2f, -0.8f};
+    std::vector<float> audioImag(audioReal.size(), 0.0f); // Imaginary part starts as 0
+
+    // The main workload: Transform the audio into the frequency domain.
+    simpleFFT(audioReal, audioImag);
+
+    // Now audioReal and audioImag hold the frequency information (FFT result).
+    // This would be used for the next steps (Mel filters, etc.).
+    return 0;
+}
+
+
+
+#include <vector>
+
+// This function calculates the dot product between two vectors.
+// This is the fundamental operation for comparing features to a stored model.
+float calculateSimilarity(const std::vector<float>& inputFeatures,
+                         const std::vector<float>& modelWeights) {
+    // Initialize the accumulator for the sum
+    float similarity_score = 0.0f;
+
+    // Loop through each corresponding element in the two vectors
+    for (size_t i = 0; i < inputFeatures.size(); ++i) {
+        // THE CORE OPERATION: Multiply feature value by model weight and add to the total.
+        // This single line is a Multiply-Accumulate (MAC).
+        similarity_score += inputFeatures[i] * modelWeights[i];
+    }
+
+    return similarity_score;
+}
+
+int main() {
+    // Simulate the features extracted from a tiny piece of audio (e.g., MFCCs)
+    std::vector<float> currentAudioFeatures = {0.12f, -0.45f, 0.89f, 0.76f, -0.31f};
+
+    // Simulate the stored weights for one specific Sesotho sound (e.g., the "s" phoneme)
+    std::vector<float> modelForS = {0.15f, -0.4f, 0.92f, 0.68f, -0.28f};
+
+    // The main workload: See how similar the current audio is to the known sound "s".
+    float score = calculateSimilarity(currentAudioFeatures, modelForS);
+
+    // A high score means the sounds are very similar.
+    return 0;
+}//2. Agricultural Image Analysis: Core Workload
+
+
+#include <vector>
+
+// This function performs a 2D convolution on a grayscale image using a kernel.
+// It's the fundamental operation for finding edges, spots, and textures.
+std::vector<std::vector<float>> convolve2D(const std::vector<std::vector<float>>& image,
+                                          const std::vector<std::vector<float>>& kernel) {
+    int image_size = image.size();
+    int kernel_size = kernel.size();
+    // Calculate the size of the output image
+    int output_size = image_size - kernel_size + 1;
+
+    // Create the output image, initialized to black (0.0)
+    std::vector<std::vector<float>> output(output_size, std::vector<float>(output_size, 0.0f));
+
+    // Loop over every possible position where the kernel fits inside the image
+    for (int i = 0; i < output_size; ++i) {       // Move kernel down
+        for (int j = 0; j < output_size; ++j) {   // Move kernel right
+
+            // --- For this single pixel (i, j) in the output, apply the kernel ---
+            // Initialize the accumulator for this output pixel to 0
+            float sum = 0.0f;
+
+            // Loop over each element in the kernel
+            for (int ki = 0; ki < kernel_size; ++ki) {
+                for (int kj = 0; kj < kernel_size; ++kj) {
+                    // THE CORE OPERATION: Multiply the image pixel by the kernel value.
+                    // Then accumulate the result.
+                    sum += image[i + ki][j + kj] * kernel[ki][kj]; // MAC operation
+                }
+            }
+            // Store the accumulated result for this output pixel
+            output[i][j] = sum;
+        }
+    }
+    return output;
+}
+
+int main() {
+    // Simulate a tiny 5x5 grayscale image (values from 0.0 black to 1.0 white)
+    std::vector<std::vector<float>> simpleImage = {
+        {0.1f, 0.1f, 0.1f, 0.1f, 0.1f},
+        {0.1f, 0.9f, 0.9f, 0.9f, 0.1f},
+        {0.1f, 0.9f, 0.9f, 0.9f, 0.1f},
+        {0.1f, 0.9f, 0.9f, 0.9f, 0.1f},
+        {0.1f, 0.1f, 0.1f, 0.1f, 0.1f}
+    };
+
+    // A simple "edge detection" kernel that highlights changes in value
+    std::vector<std::vector<float>> edgeKernel = {
+        {-1.0f, -1.0f, -1.0f},
+        {-1.0f,  8.0f, -1.0f},
+        {-1.0f, -1.0f, -1.0f}
+    };
+
+    // The main workload: Process the entire image with the kernel to find edges.
+    auto edges = convolve2D(simpleImage, edgeKernel);
+
+    // The 'edges' variable now contains a new image where edges are bright.
+    return 0;
+}
+
+
+//3. Simplified Biometric Identification: Core Workload
+#include <vector>
+#include <cmath> // For abs()
+
+// This function compares two feature vectors using Sum of Absolute Differences.
+// A lower score means the features are more similar.
+float compareFeaturesSAD(const std::vector<float>& scannedFingerprint,
+                        const std::vector<float>& storedTemplate) {
+    // Initialize the accumulator for the total difference
+    float total_difference = 0.0f;
+
+    // Loop through each corresponding feature in both vectors
+    for (size_t i = 0; i < scannedFingerprint.size(); ++i) {
+        // THE CORE OPERATION:
+        // 1. Subtract the stored feature value from the scanned value.
+        float difference = scannedFingerprint[i] - storedTemplate[i];
+        // 2. Take the absolute value to get the magnitude of the difference.
+        float absolute_difference = std::abs(difference);
+        // 3. Accumulate the absolute differences.
+        total_difference += absolute_difference;
+    }
+    return total_difference;
+}
+
+int main() {
+    // Simulate features extracted from a just-scanned fingerprint (e.g., minutiae angles)
+    std::vector<float> newScan = {45.5f, 90.1f, 135.2f, 12.7f};
+
+    // Simulate the stored template of the authorized user's fingerprint
+    std::vector<float> storedTemplate = {44.8f, 91.3f, 134.9f, 13.1f};
+
+    // The main workload: Compare the new scan to the stored template.
+    float matchScore = compareFeaturesSAD(newScan, storedTemplate);
+
+    // If matchScore is below a threshold, the fingerprints are considered a match.
+    return 0;
+}

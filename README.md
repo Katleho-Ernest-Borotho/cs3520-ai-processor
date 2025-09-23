@@ -1,1 +1,1 @@
-# cs3520-ai-processor
+# CS3520-ai-processor

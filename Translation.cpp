@@ -38,4 +38,5 @@ int main() {
     synthesize(8); // generate 8 samples
 
     return 0;
+
 }
